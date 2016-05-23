@@ -120,6 +120,20 @@ module Refile
       end
     end
 
+    # Fix quality at 70.
+    #
+    # @param [MiniMagick::Image] img      the image to convert
+    # @param [#to_s] quality              the desired quality
+    # @yield [MiniMagick::Tool::Mogrify, MiniMagick::Tool::Convert]
+    # @return [void]
+    def compress(img, quality = 70)
+      ::MiniMagick::Tool::Convert.new do |cmd|
+        yield cmd if block_given?
+        cmd.quality("#{quality}")
+        cmd.merge! [img.path, img.path]
+      end
+    end
+
     # Process the given file. The file will be processed via one of the
     # instance methods of this class, depending on the `method` argument passed
     # to the constructor on initialization.
@@ -139,6 +153,6 @@ module Refile
   end
 end
 
-[:fill, :fit, :limit, :pad, :convert].each do |name|
+[:fill, :fit, :limit, :pad, :convert, :compress].each do |name|
   Refile.processor(name, Refile::MiniMagick.new(name))
 end
