@@ -201,6 +201,6 @@ module Refile
   end
 end
 
-[:fill, :fit, :limit, :pad, :convert, :compress].each do |name|
+[:quality, :fill, :fillq, :fit, :fitq, :limit, :pad, :convert].each do |name|
   Refile.processor(name, Refile::MiniMagick.new(name))
 end
