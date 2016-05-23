@@ -56,6 +56,25 @@ module Refile
       end
     end
 
+    # Resize the image to fit within the specified dimensions while retaining
+    # the original aspect ratio. The image may be shorter or narrower than
+    # specified in the smaller dimension but will not be larger than the
+    # specified values.
+    #
+    # @param [MiniMagick::Image] img      the image to convert
+    # @param [#to_s] width                the width to fit into
+    # @param [#to_s] height               the height to fit into
+    # @param [#to_s] quality              the desired image quality
+    # @yield [MiniMagick::Tool::Mogrify, MiniMagick::Tool::Convert]
+    # @return [void]
+    def fitq(img, width, height, quality = 70)
+      img.combine_options do |cmd|
+        yield cmd if block_given?
+        cmd.resize "#{width}x#{height}"
+        cmd.quality("#{quality}")
+      end
+    end
+
     # Resize the image so that it is at least as large in both dimensions as
     # specified, then crops any excess outside the specified dimensions.
     #
@@ -79,6 +98,35 @@ module Refile
         cmd.resize "#{width}x#{height}^"
         cmd.gravity gravity
         cmd.extent "#{width}x#{height}"
+        cmd.merge! [img.path, img.path]
+      end
+    end
+
+    # Resize the image so that it is at least as large in both dimensions as
+    # specified, then crops any excess outside the specified dimensions.
+    #
+    # The resulting image will always be exactly as large as the specified
+    # dimensions.
+    #
+    # By default, the center part of the image is kept, and the remainder
+    # cropped off, but this can be changed via the `gravity` option.
+    #
+    # @param [MiniMagick::Image] img      the image to convert
+    # @param [#to_s] width                the width to fill out
+    # @param [#to_s] height               the height to fill out
+    # @param [String] gravity             which part of the image to focus on
+    # @param [#to_s] quality              the desired image quality
+    # @yield [MiniMagick::Tool::Mogrify, MiniMagick::Tool::Convert]
+    # @return [void]
+    # @see http://www.imagemagick.org/script/command-line-options.php#gravity
+    def fillq(img, width, height, gravity = "Center", quality = 70)
+      # We use `convert` to work around GraphicsMagick's absence of "gravity"
+      ::MiniMagick::Tool::Convert.new do |cmd|
+        yield cmd if block_given?
+        cmd.resize "#{width}x#{height}^"
+        cmd.gravity gravity
+        cmd.extent "#{width}x#{height}"
+        cmd.quality("#{quality}")
         cmd.merge! [img.path, img.path]
       end
     end
@@ -126,7 +174,7 @@ module Refile
     # @param [#to_s] quality              the desired quality
     # @yield [MiniMagick::Tool::Mogrify, MiniMagick::Tool::Convert]
     # @return [void]
-    def compress(img, quality = 70)
+    def quality(img, quality = 70)
       ::MiniMagick::Tool::Convert.new do |cmd|
         yield cmd if block_given?
         cmd.quality("#{quality}")
