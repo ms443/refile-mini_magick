@@ -72,6 +72,7 @@ module Refile
         yield cmd if block_given?
         cmd.resize "#{width}x#{height}"
         cmd.quality("#{quality}")
+        cmd.interlace "plane"
       end
     end
 
@@ -101,15 +102,6 @@ module Refile
         cmd.merge! [img.path, img.path]
       end
     end
-    
-    def optimize(img)
-      # We use `convert` to work around GraphicsMagick's absence of "gravity"
-      ::MiniMagick::Tool::Convert.new do |cmd|
-        yield cmd if block_given?
-        cmd.interlace "plane"
-        cmd.merge! [img.path, img.path]
-      end
-    end
 
     # Resize the image so that it is at least as large in both dimensions as
     # specified, then crops any excess outside the specified dimensions.
@@ -136,6 +128,7 @@ module Refile
         cmd.gravity gravity
         cmd.extent "#{width}x#{height}"
         cmd.quality("#{quality}")
+        cmd.interlace "plane"
         cmd.merge! [img.path, img.path]
       end
     end
@@ -210,6 +203,6 @@ module Refile
   end
 end
 
-[:quality, :fill, :fillq, :fit, :fitq, :limit, :pad, :optimize, :convert].each do |name|
+[:quality, :fill, :fillq, :fit, :fitq, :limit, :pad, :convert].each do |name|
   Refile.processor(name, Refile::MiniMagick.new(name))
 end
